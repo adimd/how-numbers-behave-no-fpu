@@ -70,6 +70,14 @@ void app_main(void)
     static const float benign[] = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     probe_summation_order(benign, 5, "1+2+3+4+5 (control: no magnitude spread)");
 
+    // 2e. Kahan summation -- recover the bits naive summation throws away.
+    static float ten_k_tenths[10000];
+    for (int i = 0; i < 10000; i++) ten_k_tenths[i] = 0.1f;
+    probe_kahan(ten_k_tenths, 10000, "10000 x 0.1 -- naive creeps; Kahan should recover");
+
+    static const float kahan_mixed[] = { 1.0e6f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f };
+    probe_kahan(kahan_mixed, 6, "1e6 + five 0.1 -- big swamps small unless compensated");
+
 
     printf("\n--- end of run ---\n");
 }

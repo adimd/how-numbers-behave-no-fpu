@@ -187,3 +187,44 @@ void probe_summation_bigsmall(float big, float small, long count, const char *no
     else
         printf("VERDICT:  confirmed -- SAME numbers, different order, different sum: addition is not associative.\n");
 }
+
+
+void probe_kahan(const float *vals, int n, const char *note) {
+    static float kbuf[SUM_MAX];              // own buffer (buf is local to another probe)
+    if (n > SUM_MAX) n = SUM_MAX;
+
+    // --- naive float sum (small-to-large, the friendlier order) ---
+    sort_ascending(vals, kbuf, n);           // kbuf ascending
+    volatile float naive = 0.0f;
+    for (int i = 0; i < n; i++) naive = naive + kbuf[i];
+
+    // --- Kahan compensated sum (same order) ---
+    volatile float sum = 0.0f;
+    volatile float c   = 0.0f;               // running correction (the saved bits)
+    for (int i = 0; i < n; i++) {
+        float y = kbuf[i] - c;               // bring in the leftover from last step
+        float t = sum + y;                   // this addition loses low bits...
+        c = (t - sum) - y;                   // ...and c captures exactly what was lost
+        sum = t;
+    }
+
+    // --- double reference (truth) ---
+    double exact = 0.0;
+    for (int i = 0; i < n; i++) exact += (double)kbuf[i];
+
+    printf("\n--- PROBE: Kahan summation (the fix) ---\n");
+    printf("VALUE:    %s  (n=%d)\n", note, n);
+    printf("          exact (double)      = "); print_double(exact, 6); printf("\n");
+    printf("          naive  float sum    = "); print_double((double)naive, 6);
+    printf("   (err "); print_double((double)naive - exact, 6); printf(")\n");
+    printf("          Kahan  float sum    = "); print_double((double)sum, 6);
+    printf("   (err "); print_double((double)sum - exact, 6); printf(")\n");
+    printf("          leftover correction = "); print_double((double)c, 9); printf("\n");
+
+    double e_naive = (double)naive - exact; if (e_naive < 0) e_naive = -e_naive;
+    double e_kahan = (double)sum   - exact; if (e_kahan < 0) e_kahan = -e_kahan;
+    if (e_kahan < e_naive)
+        printf("VERDICT:  confirmed -- Kahan recaptured the lost bits; far closer to the true sum.\n");
+    else
+        printf("VERDICT:  confirmed -- no improvement here (this input doesn't lose bits to recover).\n");
+}

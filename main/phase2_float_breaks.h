@@ -16,3 +16,7 @@ void probe_accumulate(float start, float inc, long count, const char *note);
 void probe_summation_order(const float *vals, int n, const char *note);
 // Big + many small, summed both orders WITHOUT an array (no RAM blowup).
 void probe_summation_bigsmall(float big, float small, long count, const char *note);
+
+// Sum the same values naively and with Kahan compensation, vs double truth.
+// Kahan keeps a running correction that recaptures the bits naive addition drops.
+void probe_kahan(const float *vals, int n, const char *note);
