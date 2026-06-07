@@ -115,8 +115,15 @@ void app_main(void)
     // 4a. Two's-complement wrap -- 100+50 goes negative; the wrap-around clock.
     probe_twos_complement();
 
+    // 4b. Division & truncation -- toward zero, not toward -infinity.
+    probe_division( 7,  2, " 7 /  2 -- both positive: the easy case");
+    probe_division(-7,  2, "-7 /  2 -- negative dividend: truncates to -3, not -4");
+    probe_division( 7, -2, " 7 / -2 -- negative divisor: also truncates toward zero");
+    probe_division(-7, -2, "-7 / -2 -- both negative: quotient positive");
+    probe_division(-1,  2, "-1 /  2 -- rounds to 0, not -1 (toward zero)");
 
-    
+
+
 
     vTaskDelay(pdMS_TO_TICKS(10));
 

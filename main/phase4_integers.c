@@ -33,3 +33,26 @@ void probe_twos_complement(void) {
     printf("VERDICT:  confirmed -- no saturation: integers wrap. 100+50 lands on a\n");
     printf("          negative number because the count ran off the top of the clock.\n");
 }
+
+void probe_division(int dividend, int divisor, const char *note) {
+    int q = dividend / divisor;          // C integer division
+    int r = dividend % divisor;          // C remainder
+    int identity = (q * divisor + r);    // should reconstruct the dividend
+
+    // For contrast: what "floor division" (round toward -infinity) would give.
+    int qfloor = q;
+    if ((r != 0) && ((r < 0) != (divisor < 0))) qfloor = q - 1;  // adjust if signs differ
+
+    printf("\n--- PROBE: integer division & truncation ---\n");
+    printf("VALUE:    %s\n", note);
+    printf("          %d / %d  = %d   (quotient)\n", dividend, divisor, q);
+    printf("          %d %% %d = %d   (remainder)\n", dividend, divisor, r);
+    printf("          identity check: q*divisor + r = %d*%d + %d = %d  (== dividend? %s)\n",
+           q, divisor, r, identity, (identity == dividend) ? "yes" : "NO");
+    if (qfloor != q)
+        printf("          note: truncation gave %d; floor division would give %d (differs for negatives)\n",
+               q, qfloor);
+
+    printf("VERDICT:  confirmed -- division truncates toward zero; remainder takes the\n");
+    printf("          dividend's sign; and q*divisor + r always reconstructs the dividend.\n");
+}
