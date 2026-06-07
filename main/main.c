@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "phase1_float_built.h"
 #include "phase2_float_breaks.h"
+#include "phase3_edges.h"
 
 static void phase_banner(const char *title) {
     printf("\n#########################################\n");
@@ -77,6 +78,13 @@ void app_main(void)
 
     static const float kahan_mixed[] = { 1.0e6f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f };
     probe_kahan(kahan_mixed, 6, "1e6 + five 0.1 -- big swamps small unless compensated");
+
+    // =====================================================================
+    phase_banner("PHASE 3: THE EDGES");
+    // =====================================================================
+
+    // 3a. Overflow -- climb past FLT_MAX and saturate to +infinity.
+    probe_overflow();
 
 
     printf("\n--- end of run ---\n");

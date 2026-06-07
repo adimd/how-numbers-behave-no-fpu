@@ -20,14 +20,17 @@ void print_f32_fields_binary(uint32_t bits) {
 
 void print_double(double x, int dec) {
     if (x < 0) { putchar('-'); x = -x; }
+    if (x >= 2147483647.0) {            // beyond what 32-bit long can hold honestly
+        printf("(>2^31, see bits)");
+        return;
+    }
     long int_part = (long)x;
     double frac = x - (double)int_part;
     printf("%ld.", int_part);
-    // emit fractional digits one at a time -- never forms a huge scaled integer
     for (int i = 0; i < dec; i++) {
         frac *= 10.0;
         int digit = (int)frac;
-        if (digit > 9) digit = 9;   // guard against rounding spill
+        if (digit > 9) digit = 9;
         putchar('0' + digit);
         frac -= digit;
     }
