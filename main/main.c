@@ -5,6 +5,9 @@
 #include "phase2_float_breaks.h"
 #include "phase3_edges.h"
 #include "phase4_integers.h"
+#include "phase5_fixed_point.h"
+
+
 
 static void phase_banner(const char *title) {
     printf("\n#########################################\n");
@@ -124,6 +127,17 @@ void app_main(void)
 
     // 4c. Signed overflow as UB -- the probe we chose -O3 for.
     probe_signed_overflow();
+
+    // =====================================================================
+    vTaskDelay(pdMS_TO_TICKS(10));
+    phase_banner("PHASE 5: FIXED-POINT");
+    // =====================================================================
+
+    // 5a. Qm.n representation -- an integer with a hidden scale carries fractions.
+    probe_fixed_point_repr(0.5,  "0.5  -- a power of two: exact on the Q16.16 grid");
+    probe_fixed_point_repr(0.1,  "0.1  -- the float troublemaker: snaps, but differently");
+    probe_fixed_point_repr(3.25, "3.25 -- exact (1/4 step): integer part + clean fraction");
+    probe_fixed_point_repr(1.0/3.0, "1/3 -- not on any binary grid: snaps");
 
 
     vTaskDelay(pdMS_TO_TICKS(10));
