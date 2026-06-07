@@ -4,6 +4,7 @@
 #include "phase1_float_built.h"
 #include "phase2_float_breaks.h"
 #include "phase3_edges.h"
+#include "phase4_integers.h"
 
 static void phase_banner(const char *title) {
     printf("\n#########################################\n");
@@ -105,6 +106,20 @@ void app_main(void)
     // 3c. NaN -- the value that fails its own equality test.
     probe_nan();
 
+
+    // =====================================================================
     vTaskDelay(pdMS_TO_TICKS(10));
+    phase_banner("PHASE 4: UNDERNEATH THE FLOAT");
+    // =====================================================================
+
+    // 4a. Two's-complement wrap -- 100+50 goes negative; the wrap-around clock.
+    probe_twos_complement();
+
+
+    
+
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+
     printf("\n--- end of run ---\n");
 }
