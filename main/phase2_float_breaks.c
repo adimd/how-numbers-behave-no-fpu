@@ -5,6 +5,7 @@
 
 #include <float.h>   // add this up with the other includes at the top of the file
 
+#define SUM_MAX 12000
 // (the rest of the file stays; append the two functions below)
 
 void probe_epsilon(void) {
@@ -106,4 +107,83 @@ void probe_gap_grows(void) {
 
     printf("VERDICT:  confirmed -- at 2^24 the gap is 2, so +1 lands back on 2^24;\n");
     printf("          the increment is smaller than the space between numbers.\n");
+}
+
+
+
+// ascending insertion-style sort into a provided buffer (small/simple on purpose)
+static void sort_ascending(const float *src, float *dst, int n) {
+    for (int i = 0; i < n; i++) dst[i] = src[i];
+    for (int i = 1; i < n; i++) {
+        float key = dst[i];
+        int j = i - 1;
+        while (j >= 0 && dst[j] > key) { dst[j + 1] = dst[j]; j--; }
+        dst[j + 1] = key;
+    }
+}
+
+void probe_summation_order(const float *vals, int n, const char *note) {
+    static float buf[SUM_MAX];        // static: keep it off the small task stack
+    if (n > SUM_MAX) n = SUM_MAX;
+
+    sort_ascending(vals, buf, n);     // buf is now ascending
+
+    // float, small-to-large (ascending)
+    volatile float asc = 0.0f;
+    for (int i = 0; i < n; i++) asc = asc + buf[i];
+
+    // float, large-to-small (descending = walk ascending buffer backwards)
+    volatile float desc = 0.0f;
+    for (int i = n - 1; i >= 0; i--) desc = desc + buf[i];
+
+    // double reference (the truth both float orders are trying to hit)
+    double exact = 0.0;
+    for (int i = 0; i < n; i++) exact += (double)buf[i];
+
+    double err_asc  = (double)asc  - exact;
+    double err_desc = (double)desc - exact;
+    double between  = (double)asc  - (double)desc;
+
+    printf("\n--- PROBE: summation order ---\n");
+    printf("VALUE:    %s  (n=%d)\n", note, n);
+    printf("          exact (double)        = "); print_double(exact, 6); printf("\n");
+    printf("          float small-to-large  = "); print_double((double)asc, 6);
+    printf("   (err "); print_double(err_asc, 6); printf(")\n");
+    printf("          float large-to-small  = "); print_double((double)desc, 6);
+    printf("   (err "); print_double(err_desc, 6); printf(")\n");
+    printf("          discrepancy (asc-desc)= "); print_double(between, 6); printf("\n");
+
+    if (between == 0.0)
+        printf("VERDICT:  confirmed -- order did NOT matter here (magnitudes too close to split).\n");
+    else
+        printf("VERDICT:  confirmed -- SAME numbers, different order, different sum: addition is not associative.\n");
+}
+
+
+void probe_summation_bigsmall(float big, float small, long count, const char *note) {
+    // small-to-large: add all the smalls first, THEN the big one
+    volatile float asc = 0.0f;
+    for (long i = 0; i < count; i++) asc = asc + small;
+    asc = asc + big;
+
+    // large-to-small: add the big one first, THEN all the smalls
+    volatile float desc = big;
+    for (long i = 0; i < count; i++) desc = desc + small;
+
+    // double reference (truth)
+    double exact = (double)big + (double)small * (double)count;
+
+    printf("\n--- PROBE: summation order (big + many small) ---\n");
+    printf("VALUE:    %s  (count=%ld)\n", note, count);
+    printf("          exact (double)        = "); print_double(exact, 3); printf("\n");
+    printf("          float small-to-large  = "); print_double((double)asc, 3);
+    printf("   (err "); print_double((double)asc - exact, 3); printf(")\n");
+    printf("          float large-to-small  = "); print_double((double)desc, 3);
+    printf("   (err "); print_double((double)desc - exact, 3); printf(")\n");
+    printf("          discrepancy (asc-desc)= "); print_double((double)asc - (double)desc, 3); printf("\n");
+
+    if ((float)asc == (float)desc)
+        printf("VERDICT:  confirmed -- order did NOT matter here.\n");
+    else
+        printf("VERDICT:  confirmed -- SAME numbers, different order, different sum: addition is not associative.\n");
 }

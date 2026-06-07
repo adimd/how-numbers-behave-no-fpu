@@ -51,5 +51,25 @@ void app_main(void)
     probe_accumulate(8388608.0f,  1.0f,       1000000, "2^23, gap=1: +1 still works");
 
 
+    // 2d. Summation order -- same numbers, different order, different answer.
+
+// Case A: big ABOVE 2^24 + many small, array-free (no RAM cost).
+    // 1e8 >> 2^24, so its gap is large; adding 1.0 large-first vanishes.
+    probe_summation_bigsmall(1.0e8f, 1.0f, 1000000, "1e8 plus 1,000,000 x 1.0 (big above 2^24)");
+
+    // Case B: many equal mid-size values (generated). No giant; subtler drift.
+    static float many_equal[10000];
+    for (int i = 0; i < 10000; i++) many_equal[i] = 0.1f;       // 10000 x 0.1
+    probe_summation_order(many_equal, 10000, "10000 x 0.1");
+
+    // Case C: explicit small illustrative set -- mixed magnitudes, fully visible.
+    static const float mixed[] = { 1.0e6f, 0.5f, 0.5f, 0.25f, 0.25f };
+    probe_summation_order(mixed, 5, "1e6 + 0.5 + 0.5 + 0.25 + 0.25 (spelled out)");
+
+    // Case D: benign control -- similar magnitudes, order should NOT matter.
+    static const float benign[] = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    probe_summation_order(benign, 5, "1+2+3+4+5 (control: no magnitude spread)");
+
+
     printf("\n--- end of run ---\n");
 }
