@@ -102,6 +102,9 @@ void app_main(void)
     // 3b. Underflow -- descend through subnormals to zero.
     probe_underflow();
 
+    // 3c. NaN -- the value that fails its own equality test.
+    probe_nan();
+
     vTaskDelay(pdMS_TO_TICKS(10));
     printf("\n--- end of run ---\n");
 }

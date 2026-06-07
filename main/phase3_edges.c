@@ -76,3 +76,37 @@ void probe_underflow(void) {
     printf("VERDICT:  confirmed -- underflow is gradual: normal floats give way to\n");
     printf("          subnormals (exp=0, precision shrinking) before reaching zero.\n");
 }
+
+void probe_nan(void) {
+    printf("\n--- PROBE: NaN (not a number) ---\n");
+    printf("CLAIM:    NaN is a reserved value (exp all ones, mantissa NONzero).\n");
+    printf("          It fails its own equality test, and contaminates any arithmetic.\n");
+
+    // Make a NaN honestly: 0.0/0.0 is undefined. volatile so -O3 can't fold it.
+    volatile float zero = 0.0f;
+    float nan = zero / zero;
+
+    printf("OBSERVED: 0.0/0.0 bits = ");
+    print_f32_fields_binary(f32_bits(nan));
+    printf("\n          isnan(result) = %d\n", isnan(nan));
+
+    // The defining weirdness: NaN is not equal to itself.
+    printf("          nan == nan ? %d   (every other value equals itself)\n", (nan == nan));
+    printf("          nan != nan ? %d   (the ONE value where this is true)\n", (nan != nan));
+
+    // Comparisons all return false -- NaN is unordered.
+    printf("          nan <  1.0 ? %d\n", (nan < 1.0f));
+    printf("          nan >  1.0 ? %d   (both false: NaN is unordered, not just 'big')\n", (nan > 1.0f));
+
+    // Contamination: any arithmetic touching NaN yields NaN.
+    printf("          nan + 1.0  -> %s\n", isnan(nan + 1.0f) ? "NaN" : "a number");
+    printf("          nan * 0.0  -> %s   (not 0! NaN wins)\n", isnan(nan * 0.0f) ? "NaN" : "a number");
+
+    // Contrast with infinity (also exp all ones, but mantissa ZERO) -- a finding:
+    float inf = INFINITY;
+    printf("          (contrast) inf == inf ? %d   (infinity DOES equal itself)\n", (inf == inf));
+
+    printf("VERDICT:  confirmed -- NaN fails self-equality, is unordered against all values,\n");
+    printf("          and propagates through arithmetic. Infinity, the other all-ones\n");
+    printf("          exponent, is well-behaved by contrast -- the mantissa tells them apart.\n");
+}
