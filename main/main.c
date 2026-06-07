@@ -139,6 +139,9 @@ void app_main(void)
     probe_fixed_point_repr(3.25, "3.25 -- exact (1/4 step): integer part + clean fraction");
     probe_fixed_point_repr(1.0/3.0, "1/3 -- not on any binary grid: snaps");
 
+    // 5b. Uniform vs uneven grid -- the central tradeoff.
+    probe_grid_compare();
+
 
     vTaskDelay(pdMS_TO_TICKS(10));
 
