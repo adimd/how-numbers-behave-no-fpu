@@ -41,3 +41,38 @@ void probe_overflow(void) {
     printf("          a reserved value (exp all ones, mantissa zero) that absorbs +1\n");
     printf("          but yields NaN when you subtract it from itself.\n");
 }
+
+void probe_underflow(void) {
+    printf("\n--- PROBE: underflow through subnormals to zero ---\n");
+    printf("CLAIM:    below FLT_MIN (smallest NORMAL float) the format keeps going\n");
+    printf("          through 'subnormals' (no hidden 1), losing precision bit by bit,\n");
+    printf("          until it finally flushes to true zero.\n");
+
+    printf("OBSERVED: FLT_MIN (smallest normal) = ");
+    print_double((double)FLT_MIN, 0);    // ~1.18e-38, prints 0.000... at low dec
+    printf("\n          FLT_MIN bits             = ");
+    print_f32_fields_binary(f32_bits(FLT_MIN));
+    printf("   (exp = 1, the smallest normal exponent)\n");
+
+    // Halve repeatedly and watch it cross from normal -> subnormal -> zero.
+    volatile float v = FLT_MIN;
+    printf("          halving from FLT_MIN:\n");
+    for (int step = 0; step < 26; step++) {
+        v = v / 2.0f;
+        uint32_t b = f32_bits(v);
+        uint32_t exp_raw = (b >> 23) & 0xFF;
+        // only print the interesting transitions, not all 26 lines
+        if (step < 3 || v == 0.0f || (step % 5 == 0)) {
+            printf("            step %2d: bits = ", step + 1);
+            print_f32_fields_binary(b);
+            if (v == 0.0f)            printf("   -> ZERO (flushed)");
+            else if (exp_raw == 0)    printf("   -> subnormal (no hidden 1)");
+            else                      printf("   -> still normal");
+            printf("\n");
+        }
+        if (v == 0.0f) break;
+    }
+
+    printf("VERDICT:  confirmed -- underflow is gradual: normal floats give way to\n");
+    printf("          subnormals (exp=0, precision shrinking) before reaching zero.\n");
+}

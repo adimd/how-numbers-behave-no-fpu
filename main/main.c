@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "phase1_float_built.h"
 #include "phase2_float_breaks.h"
 #include "phase3_edges.h"
@@ -17,6 +19,7 @@ void app_main(void)
     printf("========================================\n");
 
     // =====================================================================
+    vTaskDelay(pdMS_TO_TICKS(10));   // yield to scheduler (feed the watchdog)
     phase_banner("PHASE 1: THE FLOAT, CONSTRUCTED");
     // =====================================================================
 
@@ -35,28 +38,36 @@ void app_main(void)
     probe_rounding(0.5, "0.5 -- exact (a power of two): lands with NO snap");
 
     // =====================================================================
+    vTaskDelay(pdMS_TO_TICKS(10));
     phase_banner("PHASE 2: THE FLOAT, BREAKING DOWN");
     // =====================================================================
 
     // 2a. The gap grows -- past 2^24, the spacing exceeds 1.
     probe_gap_grows();
 
-     // 2b. Machine epsilon -- the gap at 1.0, measured.
+    // 2b. Machine epsilon -- the gap at 1.0, measured.
     probe_epsilon();
 
     // 2c. Accumulation -- when additions stick, creep, or vanish entirely.
-    probe_accumulate(1.0f,        1.0f,       1000000, "inc >> gap: moves perfectly");
+    // (Each is a million software-float adds on a no-FPU chip -- slow on purpose;
+    //  yield between them so the idle task/watchdog stays satisfied.)
+    probe_accumulate(1.0f,        1.0f,        1000000, "inc >> gap: moves perfectly");
+    vTaskDelay(pdMS_TO_TICKS(10));
     probe_accumulate(1.0f,        0.00000005f, 1000000, "inc < eps/2: truly FROZEN near 1.0");
-    probe_accumulate(1.0f,        0.00001f,   1000000, "inc > epsilon: moves but creeps");
-    probe_accumulate(16777216.0f, 1.0f,       1000000, "2^24, gap=2: +1 frozen");
-    probe_accumulate(8388608.0f,  1.0f,       1000000, "2^23, gap=1: +1 still works");
-
+    vTaskDelay(pdMS_TO_TICKS(10));
+    probe_accumulate(1.0f,        0.00001f,    1000000, "inc > epsilon: moves but creeps");
+    vTaskDelay(pdMS_TO_TICKS(10));
+    probe_accumulate(16777216.0f, 1.0f,        1000000, "2^24, gap=2: +1 frozen");
+    vTaskDelay(pdMS_TO_TICKS(10));
+    probe_accumulate(8388608.0f,  1.0f,        1000000, "2^23, gap=1: +1 still works");
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     // 2d. Summation order -- same numbers, different order, different answer.
 
-// Case A: big ABOVE 2^24 + many small, array-free (no RAM cost).
+    // Case A: big ABOVE 2^24 + many small, array-free (no RAM cost).
     // 1e8 >> 2^24, so its gap is large; adding 1.0 large-first vanishes.
     probe_summation_bigsmall(1.0e8f, 1.0f, 1000000, "1e8 plus 1,000,000 x 1.0 (big above 2^24)");
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     // Case B: many equal mid-size values (generated). No giant; subtler drift.
     static float many_equal[10000];
@@ -72,6 +83,7 @@ void app_main(void)
     probe_summation_order(benign, 5, "1+2+3+4+5 (control: no magnitude spread)");
 
     // 2e. Kahan summation -- recover the bits naive summation throws away.
+    vTaskDelay(pdMS_TO_TICKS(10));
     static float ten_k_tenths[10000];
     for (int i = 0; i < 10000; i++) ten_k_tenths[i] = 0.1f;
     probe_kahan(ten_k_tenths, 10000, "10000 x 0.1 -- naive creeps; Kahan should recover");
@@ -80,12 +92,16 @@ void app_main(void)
     probe_kahan(kahan_mixed, 6, "1e6 + five 0.1 -- big swamps small unless compensated");
 
     // =====================================================================
+    vTaskDelay(pdMS_TO_TICKS(10));
     phase_banner("PHASE 3: THE EDGES");
     // =====================================================================
 
     // 3a. Overflow -- climb past FLT_MAX and saturate to +infinity.
     probe_overflow();
 
+    // 3b. Underflow -- descend through subnormals to zero.
+    probe_underflow();
 
+    vTaskDelay(pdMS_TO_TICKS(10));
     printf("\n--- end of run ---\n");
 }

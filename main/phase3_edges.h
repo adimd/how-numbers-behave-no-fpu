@@ -5,3 +5,4 @@
 // underflow through subnormals to zero -- and meet NaN.
 
 void probe_overflow(void);   // climb until the float saturates to +infinity
+void probe_underflow(void);   // descend through subnormals to zero
