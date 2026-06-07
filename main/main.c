@@ -122,7 +122,8 @@ void app_main(void)
     probe_division(-7, -2, "-7 / -2 -- both negative: quotient positive");
     probe_division(-1,  2, "-1 /  2 -- rounds to 0, not -1 (toward zero)");
 
-
+    // 4c. Signed overflow as UB -- the probe we chose -O3 for.
+    probe_signed_overflow();
 
 
     vTaskDelay(pdMS_TO_TICKS(10));

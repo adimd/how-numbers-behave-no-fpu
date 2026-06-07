@@ -2,6 +2,7 @@
 #include "probe_common.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <limits.h>   
 
 void probe_twos_complement(void) {
     printf("\n--- PROBE: two's-complement wrap ---\n");
@@ -55,4 +56,43 @@ void probe_division(int dividend, int divisor, const char *note) {
 
     printf("VERDICT:  confirmed -- division truncates toward zero; remainder takes the\n");
     printf("          dividend's sign; and q*divisor + r always reconstructs the dividend.\n");
+}
+
+
+
+// Compiled hot: the optimizer is FREE to assume signed overflow never happens,
+// so it may fold (x + 1) > x to the constant 'true' (returns 1) even at x==INT_MAX.
+static int __attribute__((optimize("O2"), noinline))
+assumes_no_overflow(int x) {
+    return (x + 1) > x;
+}
+
+// Volatile path: force the chip to actually execute INT_MAX + 1 and report the bits.
+static int __attribute__((noinline))
+runtime_wrap(volatile int x) {
+    int y = x + 1;     // volatile source: compiler must emit a real add -> wraps
+    return y;
+}
+
+void probe_signed_overflow(void) {
+    printf("\n--- PROBE: signed overflow (undefined behavior) ---\n");
+    printf("CLAIM:    signed overflow is NOT a defined value -- it's UB. The hardware\n");
+    printf("          wraps when forced; the compiler may assume it never occurs.\n");
+
+    volatile int big = INT_MAX;
+    printf("OBSERVED: INT_MAX = %d\n", big);
+
+    // 1) The hardware, forced to compute it:
+    int wrapped = runtime_wrap(big);
+    printf("          runtime  INT_MAX + 1 = %d  (the chip wrapped to INT_MIN)\n", wrapped);
+
+    // 2) The compiler's assumption, in an aggressively-optimized function:
+    int cmp = assumes_no_overflow(big);
+    printf("          compiler (x+1) > x at INT_MAX returns %d\n", cmp);
+    printf("            -> 1 means the optimizer ASSUMED no overflow (folded to true)\n");
+    printf("            -> 0 means it computed the wrap (INT_MIN > INT_MAX is false)\n");
+
+    printf("VERDICT:  confirmed -- signed overflow is undefined: the SAME expression gives\n");
+    printf("          a wrapped value when executed but a compiler-assumed answer when\n");
+    printf("          optimized. Not a number the hardware owns -- a contract the program broke.\n");
 }
