@@ -17,3 +17,13 @@ void print_f32_fields_binary(uint32_t bits) {
     for (int i = 22; i >= 0; i--)             // mantissa, 23 bits
         putchar((bits >> i) & 1 ? '1' : '0');
 }
+
+void print_double(double x, int dec) {
+    if (x < 0) { putchar('-'); x = -x; }
+    long scale = 1;
+    for (int i = 0; i < dec; i++) scale *= 10;
+    long int_part = (long)x;
+    long frac = (long)((x - (double)int_part) * (double)scale + 0.5);
+    if (frac >= scale) { frac -= scale; int_part += 1; }  // rounding carry
+    printf("%ld.%0*ld", int_part, dec, frac);
+}

@@ -7,3 +7,7 @@ uint32_t f32_bits(float f);
 // Print a 32-bit value as binary, grouped as IEEE-754 fields:
 //   sign(1) | exponent(8) | mantissa(23)
 void print_f32_fields_binary(uint32_t bits);
+
+// Print a double as fixed-point with `dec` places (avoids %f / nano-printf issues).
+// Intended for modest-magnitude values; integer part uses 32-bit long.
+void print_double(double x, int dec);

@@ -52,3 +52,26 @@ void probe_float_anatomy(float value, const char *note) {
            sign ? "-" : "", int_part, frac_milli);
     printf("VERDICT:  confirmed -- the stored fields reconstruct the value.\n");
 }
+
+void probe_rounding(double requested, const char *note) {
+    float  stored = (float)requested;    // force the value onto the float32 grid
+    double back   = (double)stored;      // widen it back to see what was actually kept
+    double error  = back - requested;    // the snap distance
+
+    printf("\n--- PROBE: rounding (the snap) ---\n");
+    printf("VALUE:    %s\n", note);
+    printf("          requested = ");
+    print_double(requested, 9);
+    printf("\n          stored    = ");
+    print_double(back, 9);
+    printf("   bits = ");
+    print_f32_fields_binary(f32_bits(stored));
+    printf("\n          error     = ");
+    print_double(error, 9);
+    printf("\n");
+
+    if (error == 0.0)
+        printf("VERDICT:  confirmed -- this value IS on the grid; it landed exactly, no snap.\n");
+    else
+        printf("VERDICT:  confirmed -- the chip kept the nearest grid point, not your number.\n");
+}
