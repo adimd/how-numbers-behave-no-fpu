@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "phase1_float_built.h"
+#include "phase2_float_breaks.h"
 
 static void phase_banner(const char *title) {
     printf("\n#########################################\n");
@@ -31,6 +32,24 @@ void app_main(void)
     probe_rounding(0.2, "0.2 -- also off-grid");
     probe_rounding(0.3, "0.3 -- snaps too; this is what sets up 0.1+0.2 later");
     probe_rounding(0.5, "0.5 -- exact (a power of two): lands with NO snap");
+
+    // =====================================================================
+    phase_banner("PHASE 2: THE FLOAT, BREAKING DOWN");
+    // =====================================================================
+
+    // 2a. The gap grows -- past 2^24, the spacing exceeds 1.
+    probe_gap_grows();
+
+     // 2b. Machine epsilon -- the gap at 1.0, measured.
+    probe_epsilon();
+
+    // 2c. Accumulation -- when additions stick, creep, or vanish entirely.
+    probe_accumulate(1.0f,        1.0f,       1000000, "inc >> gap: moves perfectly");
+    probe_accumulate(1.0f,        0.00000005f, 1000000, "inc < eps/2: truly FROZEN near 1.0");
+    probe_accumulate(1.0f,        0.00001f,   1000000, "inc > epsilon: moves but creeps");
+    probe_accumulate(16777216.0f, 1.0f,       1000000, "2^24, gap=2: +1 frozen");
+    probe_accumulate(8388608.0f,  1.0f,       1000000, "2^23, gap=1: +1 still works");
+
 
     printf("\n--- end of run ---\n");
 }
