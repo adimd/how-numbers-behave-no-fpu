@@ -5,7 +5,7 @@ floating-point and integer arithmetic actually behave on real silicon, with a cl
 verdict on each behavior.
 
 > A longer write-up of this investigation, with the full story and the surprises
-> found along the way, will be posted here: **[blog post coming soon]** *(link to be added)*
+> found along the way, is here: **[How Numbers Behave on a Chip With No FPU](https://adithyamd.com/Projects/how-numbers-behave-no-fpu.html)**
 
 ## Objective
 
